@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bloom & Co — Flower Shop</title>
+  <meta name="description" content="Bloom & Co — beautiful bouquets, fast delivery. Demo site with cart + checkout (mock payments + PayPal sandbox wiring)." />
+  <style>
+    /* ---------- Simple reset ---------- */
+    :root{
+      --bg:#fff7f9;
+      --card:#ffffff;
+      --muted:#6b6b6b;
+      --accent:#d6336c;
+      --accent-2:#ff9db2;
+      --green:#2ea44f;
+      --shadow: 0 8px 30px rgba(11,13,20,0.06);
+      --radius:14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:#222;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#fff4f6 0%, #fff 60%);-webkit-font-smoothing:antialiased}
+    a{color:inherit}
+    .container{max-width:1100px;margin:0 auto;padding:2rem}
+
+    /* Header */
+    header{display:flex;align-items:center;gap:1rem;justify-content:space-between;padding:1rem;border-radius:12px}
+    .brand{display:flex;gap:.8rem;align-items:center}
+    .logo{
+      width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:var(--shadow)
+    }
+    nav a{margin-left:1rem;font-weight:700;color:var(--muted);text-decoration:none}
+    .cta{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;padding:.6rem 1rem;border-radius:10px;border:none;cursor:pointer;font-weight:800}
+
+    /* Hero */
+    .hero{display:grid;grid-template-columns:1fr 420px;gap:1.2rem;align-items:center;margin-top:1rem}
+    .hero-left h1{font-size:2.1rem;margin:0 0 .3rem}
+    .hero-left p{margin:0;color:var(--muted)}
+    .shop-bubble{background:var(--card);padding:.8rem;border-radius:12px;box-shadow:var(--shadow)}
+
+    /* Products */
+    .products{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.2rem}
+    .product{background:linear-gradient(180deg,#fff,#fffafc);padding:1rem;border-radius:12px;border:1px solid rgba(0,0,0,0.03)}
+    .product img{width:100%;height:160px;object-fit:cover;border-radius:10px}
+    .product h3{margin:.6rem 0 0;font-size:1.05rem}
+    .price{color:var(--accent);font-weight:800;font-size:1.05rem}
+
+    /* Cart / sidebar */
+    .sidebar{position:sticky;top:20px;background:var(--card);padding:1rem;border-radius:12px;box-shadow:var(--shadow)}
+    .cart-item{display:flex;gap:.6rem;align-items:center;padding:.45rem 0;border-bottom:1px dashed rgba(0,0,0,0.04)}
+    .cart-item img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+    .muted{color:var(--muted);font-size:.95rem}
+
+    /* Checkout modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal{width:420px;background:white;padding:1rem;border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,0.35)}
+    .checkout-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0}
+
+    /* buttons */
+    .btn{padding:.6rem 1rem;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+    .btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.06)}
+
+    /* responsive */
+    @media (max-width:980px){
+      .hero{grid-template-columns:1fr}
+      .products{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (max-width:560px){
+      .products{grid-template-columns:1fr}
+      nav a{display:none}
+      .hero{gap:.6rem}
+    }
+
+    /* small form styles */
+    input[type="text"], input[type="email"], select {width:100%;padding:.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.07);margin-top:.4rem}
+    label{display:block;font-weight:600;font-size:.95rem;margin-top:.6rem}
+    .success {color:var(--green);font-weight:700}
+    .error {color:#c0392b;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">B🌸</div>
+        <div>
+          <div style="font-weight:800">Bloom & Co</div>
+          <div class="muted" style="font-size:.9rem">Fresh bouquets & hand-tied arrangements</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#products">Shop</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button id="open-cart" class="cta">Cart (<span id="cart-count">0</span>)</button>
+    </header>
+
+    <section class="hero">
+      <div class="hero-left">
+        <h1>Send flowers that speak from the heart</h1>
+        <p class="muted">Same-day delivery in the city. Hand-picked seasonal bouquets — sustainably sourced.</p>
+
+        <div style="display:flex;gap:.6rem;margin-top:1rem">
+          <button class="btn btn-primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop bouquets</button>
+          <button class="btn btn-ghost" onclick="openCheckoutMock()">Quick checkout (mock)</button>
+        </div>
+
+        <div style="margin-top:1rem" class="shop-bubble muted">
+          <strong>Note:</strong> This demo uses a client-only mocked payment flow. I include PayPal sandbox wiring & server examples below to connect a real gateway. Read the instructions after the demo. ✨
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div style="font-weight:800">Your order</div>
+        <div id="cart-list" style="margin-top:.6rem">
+          <div class="muted">Cart is empty</div>
+        </div>
+        <div style="margin-top:1rem">
+          <div class="checkout-row"><div class="muted">Subtotal</div><div id="cart-subtotal">$0.00</div></div>
+          <div style="margin-top:.6rem;display:flex;gap:.5rem">
+            <button class="btn btn-primary" onclick="openCheckoutMock()">Checkout (Mock)</button>
+            <button class="btn btn-ghost" onclick="openCheckoutReal()">PayPal (Sandbox)</button>
+          </div>
+        </div>
+        <div style="margin-top:1rem" class="muted"><small>Free local delivery over $50</small></div>
+      </aside>
+    </section>
+
+    <section id="products" style="margin-top:1.4rem">
+      <h2>Bouquets</h2>
+      <div class="products" id="product-grid">
+        <!-- JS will populate products -->
+      </div>
+    </section>
+
+    <section id="about" style="margin-top:1.4rem">
+      <h2>About Bloom & Co</h2>
+      <p class="muted">We craft unique arrangements with seasonal flowers. Eco-friendly wrapping and same-day delivery in the metro area.</p>
+    </section>
+
+    <section id="contact" style="margin-top:1.2rem">
+      <h2>Contact</h2>
+      <p class="muted">Email: hello@bloom.example</p>
+    </section>
+  </div>
+
+  <!-- Checkout modal (mock + PayPal container) -->
+  <div id="modal" class="modal-backdrop" role="dialog" aria-hidden="true" aria-labelledby="checkout-title">
+    <div class="modal" role="document" aria-modal="true">
+      <h3 id="checkout-title">Checkout — Review & pay</h3>
+      <div id="checkout-items" style="margin-top:.6rem"></div>
+
+      <div style="margin-top:.6rem">
+        <label for="customer-name">Name</label>
+        <input id="customer-name" placeholder="Jane Doe" />
+        <label for="customer-email">Email</label>
+        <input id="customer-email" type="email" placeholder="you@example.com" />
+        <label for="note">Delivery note (optional)</label>
+        <input id="note" placeholder="Leave at door / ring bell" />
+      </div>
+
+      <div style="margin-top:.8rem;display:flex;gap:.6rem;align-items:center">
+        <button class="btn btn-primary" id="pay-mock">Pay with Card (Mock)</button>
+        <button class="btn btn-ghost" id="close-modal">Cancel</button>
+      </div>
+
+      <hr style="margin:.8rem 0" />
+      <div style="font-weight:700;margin-bottom:.4rem">Or pay with PayPal (sandbox)</div>
+      <!-- PayPal button container -->
+      <div id="paypal-button-container"></div>
+
+      <div id="checkout-status" style="margin-top:.6rem"></div>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * Product data (demo)
+     ***********************/
+    const PRODUCTS = [
+      { id: 'roses-1', title: 'Classic Red Roses', price: 29.00, img: 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect fill=\"%23ffeef2\" width=\"100%\" height=\"100%\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23d6336c\" font-size=\"40\">Classic Red Roses</text></svg>' },
+      { id: 'spring-1', title: 'Spring Garden Mix', price: 35.00, img: 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect fill=\"%23fff7ea\" width=\"100%\" height=\"100%\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23ff9db2\" font-size=\"36\">Spring Garden Mix</text></svg>' },
+      { id: 'peony-1', title: 'Peony Bouquet', price: 45.00, img: 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect fill=\"%23f7fff8\" width=\"100%\" height=\"100%\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%230eaa81\" font-size=\"36\">Peony Bouquet</text></svg>' },
+      { id: 'tulip-1', title: 'Sunny Tulips', price: 24.00, img: 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect fill=\"%23fff0f0\" width=\"100%\" height=\"100%\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23f59ea3\" font-size=\"36\">Sunny Tulips</text></svg>' },
+      { id: 'wild-1', title: 'Wild Meadow', price: 39.00, img: 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect fill=\"%23f0fff8\" width=\"100%\" height=\"100%\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%230a7f5a\" font-size=\"36\">Wild Meadow</text></svg>' },
+      { id: 'orchid-1', title: 'Elegant Orchid', price: 52.00, img: 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect fill=\"%23f9f6ff\" width=\"100%\" height=\"100%\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%236b46ff\" font-size=\"36\">Elegant Orchid</text></svg>' }
+    ];
+
+    /***********************
+     * Cart (client-side only)
+     ***********************/
+    const CART = {}; // id -> qty
+
+    function formatPrice(n){ return '$' + n.toFixed(2); }
+
+    function renderProducts(){
+      const grid = document.getElementById('product-grid');
+      grid.innerHTML = '';
+      for(const p of PRODUCTS){
+        const el = document.createElement('div');
+        el.className = 'product';
+        el.innerHTML = `
+          <img src="${p.img}" alt="${p.title}"/>
+          <h3>${p.title}</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem">
+            <div class="price">${formatPrice(p.price)}</div>
+            <button class="btn btn-primary" onclick="addToCart('${p.id}')">Add</button>
+          </div>
+        `;
+        grid.appendChild(el);
+      }
+    }
+
+    function addToCart(id){
+      CART[id] = (CART[id]||0) + 1;
+      updateCartUI();
+    }
+
+    function removeFromCart(id){
+      delete CART[id];
+      updateCartUI();
+    }
+
+    function updateCartUI(){
+      const list = document.getElementById('cart-list');
+      list.innerHTML = '';
+      const keys = Object.keys(CART);
+      if(!keys.length){
+        list.innerHTML = '<div class="muted">Cart is empty</div>';
+      } else {
+        for(const id of keys){
+          const p = PRODUCTS.find(x=>x.id===id);
+          const qty = CART[id];
+          const div = document.createElement('div');
+          div.className = 'cart-item';
+          div.innerHTML = `
+            <img src="${p.img}" alt="${p.title}" />
+            <div style="flex:1">
+              <div style="font-weight:700">${p.title}</div>
+              <div class="muted">${formatPrice(p.price)} × ${qty}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:800">${formatPrice(p.price*qty)}</div>
+              <button class="btn btn-ghost" style="margin-top:.35rem" onclick="changeQty('${id}', -1)">−</button>
+              <button class="btn btn-ghost" style="margin-top:.35rem" onclick="changeQty('${id}', 1)">+</button>
+              <button class="btn btn-ghost" style="margin-top:.35rem" onclick="removeFromCart('${id}')">Remove</button>
+            </div>
+          `;
+          list.appendChild(div);
+        }
+      }
+      const subtotal = Object.keys(CART).reduce((s,k)=> s + (PRODUCTS.find(p=>p.id===k).price * CART[k]), 0);
+      document.getElementById('cart-subtotal').textContent = formatPrice(subtotal);
+      document.getElementById('cart-count').textContent = Object.values(CART).reduce((a,b)=>a+b,0);
+    }
+
+    function changeQty(id, delta){
+      CART[id] = Math.max( (CART[id]||0) + delta, 0);
+      if(CART[id]===0) delete CART[id];
+      updateCartUI();
+    }
+
+    /***********************
+     * Checkout modal logic
+     ***********************/
+    const modal = document.getElementById('modal');
+    const closeBtn = document.getElementById('close-modal');
+    closeBtn.addEventListener('click', closeModal);
+    document.getElementById('open-cart').addEventListener('click', ()=> {
+      openCheckoutMock();
+    });
+
+    function openModal(){
+      renderCheckoutItems();
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+      document.getElementById('checkout-status').innerHTML = '';
+    }
+
+    function renderCheckoutItems(){
+      const container = document.getElementById('checkout-items');
+      container.innerHTML = '';
+      const keys = Object.keys(CART);
+      if(!keys.length){
+        container.innerHTML = '<div class="muted">Your cart is empty</div>';
+        return;
+      }
+      let total = 0;
+      for(const id of keys){
+        const p = PRODUCTS.find(x=>x.id===id);
+        const qty = CART[id];
+        total += p.price*qty;
+        const row = document.createElement('div');
+        row.className = 'checkout-row';
+        row.innerHTML = `<div>${p.title} × ${qty}</div><div>${formatPrice(p.price*qty)}</div>`;
+        container.appendChild(row);
+      }
+      const hr = document.createElement('div');
+      hr.style.marginTop = '.6rem';
+      hr.innerHTML = `<div class="checkout-row" style="font-weight:800"><div>Total</div><div>${formatPrice(total)}</div></div>`;
+      container.appendChild(hr);
+    }
+
+    /***********************
+     * Mock card payment (client-only)
+     ***********************/
+    document.getElementById('pay-mock').addEventListener('click', async ()=>{
+      const statusEl = document.getElementById('checkout-status');
+      const name = document.getElementById('customer-name').value.trim();
+      const email = document.getElementById('customer-email').value.trim();
+      if(!name || !email) { statusEl.innerHTML = '<div class="error">Please enter name & email</div>'; return; }
+      statusEl.innerHTML = 'Processing mock payment…';
+      // simulate network + card validation
+      await new Promise(r=>setTimeout(r, 900));
+      // random success/fail for demo
+      if(Math.random() > 0.12){
+        statusEl.innerHTML = '<div class="success">Payment successful — order placed. Thank you! (mock)</div>';
+        // clear cart
+        for(const k of Object.keys(CART)) delete CART[k];
+        updateCartUI();
+        setTimeout(closeModal, 1400);
+      } else {
+        statusEl.innerHTML = '<div class="error">Payment failed (mock). Try again.</div>';
+      }
+    });
+
+    /***********************
+     * PayPal sandbox button (client-side demo)
+     *
+     * Replace 'YOUR_PAYPAL_CLIENT_ID' with your sandbox client id to test.
+     *
+     * NOTE: For production you should create orders on your server (recommended).
+     * Docs: https://developer.paypal.com/sdk/js/reference/ and guidance below.
+     ***********************/
+    // Render PayPal button at runtime:
+    function loadPayPalScript(clientId){
+      if(document.getElementById('paypal-sdk')) return Promise.resolve();
+      return new Promise((resolve, reject)=>{
+        const s = document.createElement('script');
+        s.id = 'paypal-sdk';
+        // IMPORTANT: replace 'YOUR_PAYPAL_CLIENT_ID' with your PayPal sandbox client id to test.
+        s.src = 'https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD';
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('PayPal SDK failed to load'));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function renderPayPalButtons(){
+      // Only render if cart has items
+      if(Object.keys(CART).length === 0) return;
+      try {
+        await loadPayPalScript();
+        // If paypal object exists, render buttons into container
+        if(window.paypal){
+          // Clear existing
+          document.getElementById('paypal-button-container').innerHTML = '';
+          paypal.Buttons({
+            style: { layout:'vertical', color:'gold', shape:'rect', label:'paypal' },
+            // createOrder can be implemented server-side (recommended). For demo, we create client-side order:
+            createOrder: function(data, actions){
+              const items = Object.keys(CART).map(id=>{
+                const p = PRODUCTS.find(x=>x.id===id);
+                return { name: p.title, unit_amount: { currency_code: 'USD', value: p.price.toFixed(2) }, quantity: CART[id].toString() };
+              });
+              const total = items.reduce((s,i)=> s + (parseFloat(i.unit_amount.value) * parseInt(i.quantity)), 0);
+              return actions.order.create({
+                purchase_units: [{
+                  amount: { currency_code:'USD', value: total.toFixed(2), breakdown: { item_total: { currency_code:'USD', value: total.toFixed(2) } } },
+                  items
+                }]
+              });
+            },
+            onApprove: function(data, actions){
+              return actions.order.capture().then(function(details){
+                document.getElementById('checkout-status').innerHTML = '<div class="success">PayPal payment completed — ' + (details.payer.name?.given_name || 'Customer') + '</div>';
+                // clear cart
+                for(const k of Object.keys(CART)) delete CART[k];
+                updateCartUI();
+                setTimeout(closeModal, 1400);
+              });
+            },
+            onCancel: function(){
+              document.getElementById('checkout-status').innerHTML = '<div class="muted">Payment cancelled.</div>';
+            },
+            onError: function(err){
+              console.error('PayPal error', err);
+              document.getElementById('checkout-status').innerHTML = '<div class="error">PayPal error — check console.</div>';
+            }
+          }).render('#paypal-button-container');
+        }
+      } catch(err){
+        console.error(err);
+        document.getElementById('paypal-button-container').innerHTML = '<div class="muted">Unable to load PayPal SDK. Replace YOUR_PAYPAL_CLIENT_ID with your sandbox client id and ensure network access.</div>';
+      }
+    }
+
+    // Helpers to open checkout (mock or real)
+    function openCheckoutMock(){ openModal(); /* pay-mock is available */ renderPayPalButtons(); }
+    function openCheckoutReal(){ openModal(); renderPayPalButtons(); }
+
+    // init
+    renderProducts();
+    updateCartUI();
+
+    // close modal on backdrop click
+    modal.addEventListener('click', (e)=> { if(e.target === modal) closeModal(); });
+
+  </script>
+
+  <!--
+    ---------------------------
+    INSTALL NOTES / PRODUCTION
+    ---------------------------
+
+    1) PayPal (recommended path for quick testing)
+       - For sandbox testing you can use PayPal JS SDK with a sandbox client ID:
+         https://developer.paypal.com/sdk/js/reference/  :contentReference[oaicite:2]{index=2}
+       - The demo above uses a *client-side order creation* (actions.order.create). That works for sandbox demos but:
+         > For production, PayPal recommends creating and validating orders on your server and capturing on server-side for security and fraud control. :contentReference[oaicite:3]{index=3}
+
+    2) Stripe (recommended for cards; requires a server)
+       - Stripe Checkout requires creating a Checkout Session on your server and returning the session id to the client, then redirecting to stripe:
+         https://stripe.com/docs/payments/checkout/quickstart  :contentReference[oaicite:4]{index=4}
+       - You must never expose your Stripe secret key in client JavaScript. Use publishable key in client + server-side secret key.
+
+    3) Sample Node/Express endpoints (paste into your server)
+       - Below are minimal, copy-paste examples (Node.js) to create a Stripe Checkout Session and a PayPal order endpoint.
+
+    ---------------------------
+    SAMPLE SERVER: Node.js + Express (Stripe Checkout)
+    ---------------------------
+    // server/stripe-checkout.js (example)
+    // npm i express stripe dotenv
+    require('dotenv').config();
+    const express = require('express');
+    const Stripe = require('stripe');
+    const app = express();
+    const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // keep secret
+
+    app.use(express.json());
+
+    app.post('/create-checkout-session', async (req, res) => {
+      // req.body.items should contain array with {id, quantity, price} from client
+      const items = req.body.items || [];
+      const line_items = items.map(it => ({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: it.name },
+          unit_amount: Math.round(it.unit_price * 100),
+        },
+        quantity: it.quantity
+      }));
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items,
+        mode: 'payment',
+        success_url: 'https://your-site.example/success?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: 'https://your-site.example/cancel',
+      });
+      res.json({ id: session.id });
+    });
+
+    app.listen(4242, ()=> console.log('Stripe server listening on 4242'));
+
+    ---------------------------
+    SAMPLE SERVER: Node.js + Express (PayPal Orders API)
+    ---------------------------
+    // server/paypal-order.js (example)
+    // npm i express node-fetch dotenv
+    require('dotenv').config();
+    const express = require('express');
+    const fetch = require('node-fetch');
+    const app = express();
+    app.use(express.json());
+
+    // Exchange client id/secret for access token, create order
+    app.post('/create-paypal-order', async (req, res) => {
+      const total = req.body.total || '0.00';
+      const auth = Buffer.from(process.env.PAYPAL_CLIENT_ID + ':' + process.env.PAYPAL_SECRET).toString('base64');
+      const tokenRes = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+        method:'POST', headers:{'Authorization': 'Basic ' + auth, 'Content-Type':'application/x-www-form-urlencoded'},
+        body: 'grant_type=client_credentials'
+      });
+      const tokenJson = await tokenRes.json();
+      const access_token = tokenJson.access_token;
+      // create order
+      const orderRes = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+access_token },
+        body: JSON.stringify({
+          intent: 'CAPTURE',
+          purchase_units: [{ amount: { currency_code: 'USD', value: total } }]
+        })
+      });
+      const order = await orderRes.json();
+      res.json(order);
+    });
+
+    ---------------------------
+    IMPORTANT LINKS (docs)
+      - PayPal JS SDK reference + integration guide. :contentReference[oaicite:5]{index=5}
+      - PayPal upgrade & recommended server flows. :contentReference[oaicite:6]{index=6}
+      - Stripe Checkout & server-side creation of sessions. :contentReference[oaicite:7]{index=7}
+    ---------------------------
+  -->
+</body>
+</html>
